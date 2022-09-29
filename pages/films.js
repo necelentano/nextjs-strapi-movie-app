@@ -1,10 +1,20 @@
+import { useState } from "react";
 import Films from "../components/Films";
 import Layout from "../components/Layout";
+
+import useSWR from "swr";
 
 import { fetcher } from "../lib/api";
 
 const FilmsList = ({ films }) => {
-  console.log({ films });
+  const [pageIndex, setPageIndex] = useState(1);
+
+  const { data } = useSWR(
+    `${process.env.NEXT_PUBLIC_STRAPI_URL}/films?pagination[page]=${pageIndex}&pagination[pageSize]=5`,
+    fetcher,
+    { fallbackData: films }
+  );
+
   return (
     <Layout>
       <h1 className="text-5xl md:text-6xl font-extrabold leading-tighter mb-4">
@@ -12,7 +22,32 @@ const FilmsList = ({ films }) => {
           Films
         </span>
       </h1>
-      <Films films={films} />
+      <Films films={data} />
+
+      <div className="space-x-2 space-y-2">
+        <button
+          className={`md:p-2 rounded py-2 text-white p-2 ${
+            pageIndex === 1 ? "bg-gray-300" : "bg-blue-400"
+          }`}
+          disabled={pageIndex === 1}
+          onClick={() => setPageIndex(pageIndex - 1)}
+        >
+          {" "}
+          Previous
+        </button>
+        <button
+          className={`md:p-2 rounded py-2 text-white p-2 ${
+            pageIndex === data?.meta.pagination.pageCount
+              ? "bg-gray-300"
+              : "bg-blue-400"
+          }`}
+          disabled={pageIndex === data?.meta.pagination.pageCount}
+          onClick={() => setPageIndex(pageIndex + 1)}
+        >
+          Next
+        </button>
+        <span>{`${pageIndex} of ${data?.meta.pagination.pageCount}`}</span>
+      </div>
     </Layout>
   );
 };
@@ -20,7 +55,7 @@ export default FilmsList;
 
 export const getStaticProps = async () => {
   const filmsResponse = await fetcher(
-    `${process.env.NEXT_PUBLIC_STRAPI_URL}/films`
+    `${process.env.NEXT_PUBLIC_STRAPI_URL}/films?pagination[page]=1&pagination[pageSize]=5`
   );
 
   return {
