@@ -7,8 +7,9 @@ import {
   getTokenFromServerCookie,
 } from "../../lib/auth";
 import { useFetchUser } from "../../lib/authContext";
+import markdownToHtml from "../../lib/markdownToHtml";
 
-const Film = ({ film, jwt }) => {
+const Film = ({ film, jwt, plot }) => {
   const { user } = useFetchUser();
   const [review, setReview] = useState("");
   const router = useRouter();
@@ -61,7 +62,7 @@ const Film = ({ film, jwt }) => {
       </h2>
       <div
         className="tracking-wide font-normal text-sm"
-        dangerouslySetInnerHTML={{ __html: film?.attributes.plot }}
+        dangerouslySetInnerHTML={{ __html: plot }}
       ></div>
       {user && (
         <>
@@ -122,7 +123,9 @@ export const getServerSideProps = async ({ req, params }) => {
     jwt ? { headers: { Authorization: `Bearer ${jwt}` } } : ""
   );
 
+  const plot = await markdownToHtml(filmResponse.data.attributes.plot);
+
   return {
-    props: { film: filmResponse.data, jwt: jwt ? jwt : "" },
+    props: { film: filmResponse.data, jwt: jwt ? jwt : "", plot },
   };
 };
