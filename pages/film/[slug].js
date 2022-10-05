@@ -9,7 +9,7 @@ import {
 import { useFetchUser } from "../../lib/authContext";
 import markdownToHtml from "../../lib/markdownToHtml";
 
-const Film = ({ film, jwt, plot }) => {
+const Film = ({ film, jwt, plot, error }) => {
   const { user } = useFetchUser();
   const [review, setReview] = useState("");
   const router = useRouter();
@@ -41,6 +41,14 @@ const Film = ({ film, jwt, plot }) => {
   const handleChange = (e) => {
     setReview(e.target.value);
   };
+
+  if (error) {
+    return (
+      <Layout>
+        <p>{error}</p>
+      </Layout>
+    );
+  }
   return (
     <Layout>
       <h1 className="text-5xl md:text-6xl font-extrabold leading-tighter mb-4">
@@ -123,9 +131,15 @@ export const getServerSideProps = async ({ req, params }) => {
     jwt ? { headers: { Authorization: `Bearer ${jwt}` } } : ""
   );
 
-  const plot = await markdownToHtml(filmResponse.data.attributes.plot);
+  if (filmResponse.data) {
+    const plot = await markdownToHtml(filmResponse.data.attributes.plot);
 
-  return {
-    props: { film: filmResponse.data, jwt: jwt ? jwt : "", plot },
-  };
+    return {
+      props: { film: filmResponse.data, jwt: jwt ? jwt : "", plot },
+    };
+  } else {
+    return {
+      props: { error: filmResponse.error.message },
+    };
+  }
 };
